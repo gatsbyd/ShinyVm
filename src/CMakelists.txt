@@ -1,0 +1,11 @@
+###################################################################
+#SRC CMAKELISTS
+###################################################################
+
+# ---[ libvm.so
+file(GLOB_RECURSE srcs ${PROJECT_SOURCE_DIR}/src/*/*.cpp)
+add_library(vm SHARED ${srcs})
+
+# ---[ shinyvm
+file(GLOB_RECURSE srcs ${PROJECT_SOURCE_DIR}/src/*/*.cpp)
+add_executable(shinyvm ${srcs})
