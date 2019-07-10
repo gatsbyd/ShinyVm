@@ -1,26 +1,47 @@
 #include <unistd.h>
 #include <getopt.h>
+#include <stdlib.h>
 
 #include <string>
 #include <vector>
 #include <iostream>
 
-void parseCmd(int argc, char *argv[]);
+
+struct cmd {
+	bool helpFlag;
+	bool versionFlag;
+	std::string cp;
+	std::string className;
+	std::vector<std::string> args;
+	
+	cmd() :helpFlag(false), versionFlag(false) {}
+};
+
+cmd parseCmd(int argc, char *argv[]);
+void printUsage(std::string className);
+void startJVM(const cmd&);
 
 int main(int argc, char *argv[]) {
-	parseCmd(argc, argv);
+	cmd cmd;
+
+	cmd = parseCmd(argc, argv);
+	if (cmd.helpFlag) {
+		printUsage(argv[0]);
+	} else if (cmd.versionFlag) {
+		std::cout << "version 0.0.1\n";
+	} else {
+		startJVM(cmd);		
+	}
 }
 
 void printUsage(std::string className) {
 	std::cout << "Usage: " << className << " [-option] class [args...]" << std::endl;
 }
 
-void parseCmd(int argc, char *argv[]) {
+cmd parseCmd(int argc, char *argv[]) {
 	using std::string;
 
-	bool helpFlag = false;
-	bool versionFlag = false;
-	string cp;
+	cmd cmd;
 	int opt;
 
 	struct option long_options[] = {
@@ -34,38 +55,38 @@ void parseCmd(int argc, char *argv[]) {
 	int option_index = 0;
 	
 	while ( (opt = getopt_long_only(argc, argv, optionString, long_options, &option_index)) != -1 ) {
-		std::cout << "optind:" << optind << std::endl;
-
 		switch(opt) {
 			case 'h':
-				helpFlag = true;
-				std::cout << "help Flag\n";
+				cmd.helpFlag = true;
 				break;
 			case 'v':
-				versionFlag = true;
-				std::cout << "vertionFlag\n";
+				cmd.versionFlag = true;
 				break;
 			case 'c':
-				cp = string(optarg);
-				std::cout << "cp " << cp << std::endl;
+				cmd.cp = string(optarg);
 				break;
 			default:
 				printUsage(argv[0]);
+				exit(1);
 		}
 
 	}
-	std::cout << "helpFlag=" << helpFlag << ", versionFlag=" << versionFlag << ", cp=" << cp << std::endl;
-	std::cout << "optind:" << optind << std::endl;
 	
 	if (optind < argc) {
-		string mainClass(argv[optind++]);
-		std::cout << "main class:" << mainClass << std::endl;
-		std::vector<string> args;
+		cmd.className = string(argv[optind++]);
 		for (int i = optind; i < argc; ++i) {
-			args.push_back(string(argv[i]));
-			std::cout << "args[" << i-optind << "]=" << args[i - optind] << std::endl;
+			cmd.args.push_back(string(argv[i]));
 		}
-	} else {
-		printUsage(argv[0]);
 	}
+	return cmd;
+}
+
+void startJVM(const cmd& cmd) {
+	std::cout << "start jvm\n";
+	std::cout << "helpFlag=" << cmd.helpFlag << ", versionFlag=" << cmd.versionFlag << ", cp=" << cmd.cp
+			<< ", class=" << cmd.className << ", args=";
+	for (const std::string& s: cmd.args) {
+		std::cout << s << " ";
+	}
+	std::cout << std::endl;
 }
